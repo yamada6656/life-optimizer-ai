@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>生活最適化AI</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#20242a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:950px;margin:auto;padding:24px 16px 50px}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+h1{margin:0;font-size:28px}.sub,.muted{color:#77808a;font-size:14px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 3px 14px #0000000a}.card h2{font-size:14px;margin:0 0 8px}.value{font-size:25px;font-weight:700}
+section{margin-top:16px}.panel{background:#fff;border-radius:18px;padding:18px;box-shadow:0 3px 14px #0000000a}
+.tabs{display:flex;gap:8px;margin-bottom:14px}.tabs button,.primary,.delete{border:0;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:700}
+.tabs button{background:#edf0f3}.tabs button.active,.primary{background:#20242a;color:#fff}.form{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+input,select{width:100%;padding:11px;border:1px solid #d9dee4;border-radius:10px;background:#fff;font-size:14px}.form .wide{grid-column:span 2}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px}th,td{text-align:left;padding:10px;border-bottom:1px solid #edf0f2}th{color:#737b85}
+.delete{background:#f0f2f4;padding:6px 9px;font-size:12px}.empty{text-align:center;color:#8a929b;padding:18px}
+.ai{background:#20242a;color:#fff;border-radius:18px;padding:20px}.ai h2{margin:0 0 8px}.ai p{line-height:1.7;color:#e5e8eb}.bar{height:8px;background:#e7ebee;border-radius:9px;overflow:hidden}.bar div{height:100%;background:#20242a;border-radius:9px}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.form{grid-template-columns:1fr 1fr}.form .wide{grid-column:span 2}}
+@media(max-width:500px){header{align-items:flex-start;gap:10px}.grid{grid-template-columns:1fr}.form{grid-template-columns:1fr}.form .wide{grid-column:span 1}table{font-size:12px}}
+
+.quick-actions{display:flex;gap:10px;flex-wrap:wrap}.quick-actions button{flex:1;min-width:150px}
+
+.welcome-area{margin-bottom:18px}
+.welcome-area h2{margin:0 0 10px}
+.weather-card{padding:14px 16px;border-radius:14px;background:#f5f6f7;color:#30353a;font-size:15px}
+.weather-card strong{font-size:22px}
+.weather-error{color:#7a5b00}
+
+html,body{margin:0;padding:0;width:100%;min-height:100%;-webkit-tap-highlight-color:transparent}
+body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+button,input,select{font-size:16px;min-height:44px}
+button{touch-action:manipulation}
+.panel{width:min(100% - 24px, 920px);box-sizing:border-box;margin:12px auto}
+.grid{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
+.tabs.main-tabs{position:sticky;top:0;z-index:50;margin:0;padding:8px 8px calc(8px + env(safe-area-inset-top));background:rgba(255,255,255,.96);backdrop-filter:blur(10px);overflow-x:auto;white-space:nowrap}
+.tabs.main-tabs button{min-width:92px;flex:1}
+@media(max-width:600px){
+ .panel{border-radius:16px;padding:16px}
+ .form{grid-template-columns:1fr}
+ .form .wide{grid-column:auto}
+ .card{padding:14px}
+ table{font-size:13px}
+}
+.app-status{font-size:12px;color:#737b85;text-align:center;margin:8px 0}
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#20242a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="生活最適化AI">
+<link rel="manifest" href="manifest.webmanifest">
+
+
+.v13-backup{margin-top:16px}
+.v13-backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.v13-backup-actions button{width:100%}
+.v13-backup-note{font-size:13px;color:#737b85;line-height:1.6}
+@media(max-width:500px){.v13-backup-actions{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="app-status">生活最適化AI V13｜データ保存・バックアップ強化版</div>
+<div class="app">
+<header><div><h1>生活最適化AI</h1><div class="sub">あなたの生活データを記録・集計</div></div><div class="sub" id="today"></div></header>
+
+<div class="grid">
+<div class="card"><h2>💰 今月の支出</h2><div class="value" id="money">¥0</div><div class="muted" id="moneyCount">0件</div></div>
+<div class="card"><h2>🍗 今日のタンパク質</h2><div class="value"><span id="protein">0</span>g</div><div class="muted">目標120g</div></div>
+<div class="card"><h2>🏋️ 今週の運動</h2><div class="value"><span id="exercise">0</span>分</div><div class="muted" id="exerciseCount">0回</div></div>
+<div class="card"><h2>📊 データ件数</h2><div class="value" id="total">0</div><div class="muted">保存中</div></div>
+
+</div>
+
+<section class="panel">
+<h2>💴 お金の設定</h2>
+<div class="form">
+<input id="salary" type="number" placeholder="月給（手取り・円）">
+<input id="payday" type="number" min="1" max="31" placeholder="給料日（例：25）">
+<input id="savingTarget" type="number" min="0" placeholder="毎月貯金したい金額（円）">
+<button class="primary" onclick="saveMoneySettings()">設定を保存</button>
+</div>
+<div class="grid" style="margin-top:14px">
+<div class="card"><h2>💵 今月の収入</h2><div class="value" id="income">¥0</div></div>
+<div class="card"><h2>🏦 貯金目標</h2><div class="value" id="saving">¥0</div></div>
+<div class="card"><h2>💳 支出割合</h2><div class="value" id="spendRate">0%</div><div class="muted">収入に対する支出</div></div>
+<div class="card"><h2>🟢 使える残額</h2><div class="value" id="available">¥0</div><div class="muted">収入 − 支出 − 貯金目標</div></div>
+</div>
+<p class="muted" id="moneyAdvice"></p>
+</section>
+
+<section class="panel">
+<div class="tabs">
+<button class="active" onclick="showTab('expense',this)">💰 支出を追加</button>
+<button onclick="showTab('meal',this)">🍗 食事を追加</button>
+<button onclick="showTab('workout',this)">🏋️ 運動を追加</button>
+</div>
+
+<div id="expenseForm">
+<div class="form">
+<input id="eAmount" type="number" placeholder="金額（円）">
+<select id="eCat"><option>食費</option><option>日用品</option><option>交通費</option><option>趣味</option><option>その他</option></select>
+<input class="wide" id="eMemo" placeholder="内容（例：ラーメン）">
+<input id="eDate" type="date">
+<button class="primary" onclick="addExpense()">支出を保存</button>
+</div>
+</div>
+
+<div id="mealForm" style="display:none">
+<div class="form">
+<input class="wide" id="mName" placeholder="食べたもの（例：鶏むね肉）">
+<input id="mProtein" type="number" placeholder="タンパク質（g）">
+<input id="mCal" type="number" placeholder="カロリー（kcal）">
+<input id="mDate" type="date">
+<button class="primary" onclick="addMeal()">食事を保存</button>
+</div>
+</div>
+
+<div id="workoutForm" style="display:none">
+<div class="form">
+<select id="wType"><option>筋トレ</option><option>テニス</option><option>ウォーキング</option><option>ランニング</option><option>その他</option></select>
+<input id="wMin" type="number" placeholder="時間（分）">
+<input class="wide" id="wMemo" placeholder="内容（例：胸・肩）">
+<input id="wDate" type="date">
+<button class="primary" onclick="addWorkout()">運動を保存</button>
+</div>
+</div>
+
+<div id="list"></div>
+</section>
+
+
+
+<section class="panel v13-backup">
+<h2>💾 データ管理</h2>
+<p class="v13-backup-note">入力したデータはこのブラウザに保存されます。機種変更や万一のデータ消失に備えて、定期的にバックアップしてください。</p>
+<div class="v13-backup-actions">
+<button class="primary" type="button" onclick="v13Export()">📤 バックアップを書き出す</button>
+<button type="button" onclick="document.getElementById('v13ImportFile').click()">📥 バックアップを復元</button>
+</div>
+<input id="v13ImportFile" type="file" accept=".json,application/json" style="display:none" onchange="v13Import(event)">
+<p id="v13BackupStatus" class="v13-backup-note"></p>
+</section>
+
+<section class="panel">
+<h2>🏠 固定費</h2>
+<div class="form">
+<input id="utility" type="number" placeholder="光熱費（月・円）">
+<input id="water" type="number" placeholder="水道代（月・円）">
+<input id="rent" type="number" placeholder="家賃（月・円）">
+<input id="subscription" type="number" placeholder="サブスク（月・円）">
+<button class="primary" onclick="saveFixedCosts()">固定費を保存</button>
+</div>
+<div class="grid" style="margin-top:14px">
+<div class="card"><h2>🏠 固定費合計</h2><div class="value" id="fixedTotal">¥0</div></div>
+<div class="card"><h2>🟢 固定費率</h2><div class="value" id="fixedRate">0%</div><div class="muted">収入に対する割合</div></div>
+</div>
+</section>
+
+<section class="panel">
+<h2>📅 過去の月を振り返る</h2>
+<div class="form"><select id="historyMonth" onchange="renderHistory()"></select></div>
+<div id="history"></div>
+</section>
+
+
+<section class="panel">
+<h2>📊 月ごとのお金の推移</h2>
+<div class="form">
+<select id="moneyChartMetric" onchange="drawMoneyChart()">
+<option value="money">収入・支出・貯金</option>
+<option value="expense">総支出</option>
+<option value="saving">貯金額</option>
+</select>
+</div>
+<div style="margin-top:16px;overflow-x:auto">
+<canvas id="moneyChart" width="850" height="330"></canvas>
+</div>
+<p class="muted" id="chartNote">直近12か月を表示します。</p>
+</section>
+
+
+<section class="panel">
+<h2>🎯 家計の最適化</h2>
+<div class="form">
+<input id="foodBudget" type="number" min="0" placeholder="食費予算（月・円）">
+<input id="hobbyBudget" type="number" min="0" placeholder="趣味予算（月・円）">
+<input id="transportBudget" type="number" min="0" placeholder="交通費予算（月・円）">
+<input id="otherBudget" type="number" min="0" placeholder="その他予算（月・円）">
+<input id="goalAmount" type="number" min="0" placeholder="貯金目標額（円）">
+<input id="goalCurrent" type="number" min="0" placeholder="現在の貯金額（円）">
+<button class="primary" type="button" onclick="saveOptimization()">最適化設定を保存</button>
+</div>
+
+<div class="grid" style="margin-top:14px">
+<div class="card"><h2>📅 給料日まで</h2><div class="value" id="daysToPayday">-</div></div>
+<div class="card"><h2>🟢 今日あと使える額</h2><div class="value" id="dailyBudget">¥0</div></div>
+<div class="card"><h2>🎯 貯金進捗</h2><div class="value" id="goalProgress">0%</div></div>
+<div class="card"><h2>💰 今月の予算残り</h2><div class="value" id="budgetRemaining">¥0</div></div>
+</div>
+
+<div id="budgetDetails" style="margin-top:14px"></div>
+<div id="smartAdvice" class="card" style="margin-top:12px">
+<h2>💡 自動アドバイス</h2><div id="smartAdviceText" class="muted">データを入力すると、家計の状態を分析します。</div>
+</div>
+</section>
+
+<section class="ai">
+<h2>🤖 今日の自動アドバイス</h2>
+<p id="advice">データを入力すると、ここに現在の生活状況に合わせたアドバイスが表示されます。</p>
+</section>
+</div>
+
+<script>
+const KEY="lifeOptimizerData";
+let data=JSON.parse(localStorage.getItem(KEY)||'{"expenses":[],"meals":[],"workouts":[],"money":{"salary":0,"payday":25,"savingTarget":0}}');
+if(!data.money)data.money={salary:0,payday:25,savingTarget:0};
+if(!data.fixedCosts)data.fixedCosts={utility:0,water:0,rent:0,subscription:0};
+if("phone" in data.fixedCosts)delete data.fixedCosts.phone;
+if(!data.optimization)data.optimization={foodBudget:0,hobbyBudget:0,transportBudget:0,otherBudget:0,goalAmount:0,goalCurrent:0};
+salary.value=data.money.salary||"";payday.value=data.money.payday||25;savingTarget.value=data.money.savingTarget||"";
+utility.value=data.fixedCosts.utility||"";water.value=data.fixedCosts.water||"";rent.value=data.fixedCosts.rent||"";subscription.value=data.fixedCosts.subscription||"";
+const today=new Date().toISOString().slice(0,10);
+["eDate","mDate","wDate"].forEach(id=>document.getElementById(id).value=today);
+document.getElementById("today").textContent=new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"});
+
+
+function v13UpdateStatus(){
+ const e=document.getElementById("v13BackupStatus");
+ if(e)e.textContent="✅ この端末のブラウザに自動保存されています。";
+}
+function v13Export(){
+ const payload={app:"生活最適化AI",version:"V13",exportedAt:new Date().toISOString(),data:data};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="生活最適化AI_V13_バックアップ_"+today+".json";
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function v13Import(ev){
+ const file=ev.target.files&&ev.target.files[0];
+ if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const payload=JSON.parse(reader.result);
+   if(!payload || !payload.data || typeof payload.data!=="object")throw new Error("invalid");
+   if(!confirm("現在のデータをバックアップの内容で置き換えますか？"))return;
+   localStorage.setItem(KEY,JSON.stringify(payload.data));
+   location.reload();
+  }catch(err){alert("このバックアップファイルは読み込めません。");}
+  ev.target.value="";
+ };
+ reader.readAsText(file);
+}
+
+function save(){localStorage.setItem(KEY,JSON.stringify(data));v13UpdateStatus();render();}
+function showTab(tab,btn){
+ document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
+ ["expense","meal","workout"].forEach(x=>document.getElementById(x+"Form").style.display=x===tab?"block":"none");
+ renderList(tab);
+}
+function saveMoneySettings(){
+ const s=Number(document.getElementById("salary").value)||0;
+ const d=Math.min(31,Math.max(1,Number(document.getElementById("payday").value)||25));
+ const target=Number(document.getElementById("savingTarget").value)||0;
+ data.money={salary:s,payday:d,savingTarget:target}; save();
+ alert("お金の設定を保存しました！");
+}
+function saveFixedCosts(){
+ data.fixedCosts={
+  utility:Number(document.getElementById("utility").value)||0,
+  water:Number(document.getElementById("water").value)||0,
+  rent:Number(document.getElementById("rent").value)||0,
+  subscription:Number(document.getElementById("subscription").value)||0
+ };
+ save(); alert("固定費を保存しました！");
+}
+function renderHistory(){
+ const m=document.getElementById("historyMonth").value;if(!m)return;
+ const money=data.expenses.filter(x=>x.date.startsWith(m)).reduce((s,x)=>s+x.amount,0);
+ const meals=data.meals.filter(x=>x.date.startsWith(m)), workouts=data.workouts.filter(x=>x.date.startsWith(m));
+ const protein=meals.reduce((s,x)=>s+x.protein,0), ex=workouts.reduce((s,x)=>s+x.min,0);
+ const salary=Number(data.money?.salary)||0;
+ const fixed=Object.values(data.fixedCosts||{}).reduce((s,x)=>s+Number(x||0),0);
+ const total=money+fixed, rate=salary?total/salary*100:0;
+ document.getElementById("history").innerHTML=`<div class="grid" style="margin-top:14px">
+ <div class="card"><h2>💰 変動支出</h2><div class="value">¥${money.toLocaleString()}</div></div>
+ <div class="card"><h2>🏠 固定費</h2><div class="value">¥${fixed.toLocaleString()}</div></div>
+ <div class="card"><h2>📊 総支出</h2><div class="value">¥${total.toLocaleString()}</div></div>
+ <div class="card"><h2>📈 支出割合</h2><div class="value">${rate.toFixed(1)}%</div></div>
+ <div class="card"><h2>🍗 タンパク質</h2><div class="value">${protein}g</div><div class="muted">${meals.length}件</div></div>
+ <div class="card"><h2>🏋️ 運動</h2><div class="value">${ex}分</div><div class="muted">${workouts.length}回</div></div></div>`;
+}
+function buildHistoryMonths(){
+ const months=new Set([today.slice(0,7)]);
+ [...data.expenses,...data.meals,...data.workouts].forEach(x=>months.add(x.date.slice(0,7)));
+ const arr=[...months].sort().reverse();
+ document.getElementById("historyMonth").innerHTML=arr.map(m=>`<option value="${m}">${m.slice(0,4)}年${Number(m.slice(5))}月</option>`).join("");
+ renderHistory();
+}
+
+function saveOptimization(){
+ data.optimization={
+  foodBudget:Number(document.getElementById("foodBudget").value)||0,
+  hobbyBudget:Number(document.getElementById("hobbyBudget").value)||0,
+  transportBudget:Number(document.getElementById("transportBudget").value)||0,
+  otherBudget:Number(document.getElementById("otherBudget").value)||0,
+  goalAmount:Number(document.getElementById("goalAmount").value)||0,
+  goalCurrent:Number(document.getElementById("goalCurrent").value)||0
+ };
+ save();
+ alert("最適化設定を保存しました！");
+}
+
+function nextPaydayInfo(){
+ const day=Math.min(31,Math.max(1,Number(data.money?.payday)||25));
+ const now=new Date();
+ let target=new Date(now.getFullYear(),now.getMonth(),day);
+ if(target<=now) target=new Date(now.getFullYear(),now.getMonth()+1,day);
+ return Math.max(0,Math.ceil((target-now)/86400000));
+}
+
+function renderOptimization(){
+ const month=today.slice(0,7);
+ const o=data.optimization||{};
+ const salary=Number(data.money?.salary)||0;
+ const savingTarget=Number(data.money?.savingTarget)||0;
+ const fixed=Object.values(data.fixedCosts||{}).reduce((s,x)=>s+Number(x||0),0);
+ const expenses=data.expenses.filter(x=>x.date.startsWith(month));
+ const variable=expenses.reduce((s,x)=>s+x.amount,0);
+ const total=variable+fixed;
+
+ const days=nextPaydayInfo();
+ document.getElementById("daysToPayday").textContent=days+"日";
+ const remaining=Math.max(0,salary-total-savingTarget);
+ const daily=Math.floor(remaining/Math.max(days,1));
+ document.getElementById("dailyBudget").textContent="¥"+daily.toLocaleString();
+
+ const goal=Number(o.goalAmount)||0, current=Number(o.goalCurrent)||0;
+ const progress=goal?Math.min(100,current/goal*100):0;
+ document.getElementById("goalProgress").textContent=progress.toFixed(1)+"%";
+ document.getElementById("budgetRemaining").textContent="¥"+Math.max(0,salary-total-savingTarget).toLocaleString();
+
+ const cats={food:0,hobby:0,transport:0,other:0};
+ expenses.forEach(x=>{
+  if(x.cat==="食費")cats.food+=x.amount;
+  else if(x.cat==="趣味")cats.hobby+=x.amount;
+  else if(x.cat==="交通費")cats.transport+=x.amount;
+  else cats.other+=x.amount;
+ });
+ const budgets={food:Number(o.foodBudget)||0,hobby:Number(o.hobbyBudget)||0,transport:Number(o.transportBudget)||0,other:Number(o.otherBudget)||0};
+ const labels={food:"食費",hobby:"趣味",transport:"交通費",other:"その他"};
+ document.getElementById("budgetDetails").innerHTML=Object.keys(cats).map(k=>{
+   const b=budgets[k], used=cats[k], rate=b?used/b*100:0;
+   return `<div style="margin:10px 0"><div style="display:flex;justify-content:space-between"><span>${labels[k]}</span><span>¥${used.toLocaleString()} / ¥${b.toLocaleString()}</span></div><div class="bar"><div style="width:${Math.min(100,rate)}%"></div></div></div>`;
+ }).join("");
+
+ const advice=[];
+ if(salary<=0) advice.push("まず手取り月給を設定すると、1日あたりの利用可能額まで計算できます。");
+ if(savingTarget>0 && salary>0){
+   if(total+savingTarget>salary) advice.push("現在の支出と貯金目標の合計が収入を超えています。固定費か変動支出の見直しがおすすめです。");
+   else advice.push(`貯金目標を確保したあと、今月使える残りは¥${remaining.toLocaleString()}です。`);
+ }
+ Object.keys(cats).forEach(k=>{
+   if(budgets[k]>0 && cats[k]>budgets[k]) advice.push(`${labels[k]}が予算を¥${(cats[k]-budgets[k]).toLocaleString()}超えています。`);
+ });
+ if(days>0 && daily>0) advice.push(`次の給料日まで、平均すると1日¥${daily.toLocaleString()}以内が目安です。`);
+ if(goal>0) advice.push(`貯金目標は${progress.toFixed(1)}%達成。あと¥${Math.max(0,goal-current).toLocaleString()}です。`);
+ document.getElementById("smartAdviceText").textContent=advice.join(" ");
+}
+function addExpense(){
+ const amount=Number(eAmount.value); if(!amount)return alert("金額を入力してください");
+ data.expenses.push({id:Date.now(),amount,cat:eCat.value,memo:eMemo.value,date:eDate.value}); eAmount.value="";eMemo.value="";save();
+}
+function addMeal(){
+ const name=mName.value.trim(),protein=Number(mProtein.value); if(!name||!protein)return alert("食事名とタンパク質量を入力してください");
+ data.meals.push({id:Date.now(),name,protein,cal:Number(mCal.value)||0,date:mDate.value});mName.value="";mProtein.value="";mCal.value="";save();
+}
+function addWorkout(){
+ const min=Number(wMin.value);if(!min)return alert("運動時間を入力してください");
+ data.workouts.push({id:Date.now(),type:wType.value,min,memo:wMemo.value,date:wDate.value});wMin.value="";wMemo.value="";save();
+}
+function del(type,id){data[type]=data[type].filter(x=>x.id!==id);save();}
+function render(){
+ const month=today.slice(0,7), money=data.expenses.filter(x=>x.date.startsWith(month)).reduce((s,x)=>s+x.amount,0);
+ const salary=Number(data.money?.salary)||0, savingTarget=Number(data.money?.savingTarget)||0;
+ const fixed=Object.values(data.fixedCosts||{}).reduce((s,x)=>s+Number(x||0),0);
+ const totalOut=money+fixed;
+ const spendRate=salary>0?(totalOut/salary*100):0, available=salary-totalOut-savingTarget;
+ document.getElementById("fixedTotal").textContent="¥"+fixed.toLocaleString();
+ document.getElementById("fixedRate").textContent=(salary?(fixed/salary*100):0).toFixed(1)+"%";
+ document.getElementById("income").textContent="¥"+salary.toLocaleString();
+ document.getElementById("saving").textContent="¥"+savingTarget.toLocaleString();
+ document.getElementById("spendRate").textContent=spendRate.toFixed(1)+"%";
+ document.getElementById("available").textContent="¥"+available.toLocaleString();
+ document.getElementById("moneyAdvice").textContent=salary>0?
+   `給料日は毎月${data.money.payday||25}日。支出は収入の${spendRate.toFixed(1)}%。貯金目標を差し引いた残りは¥${available.toLocaleString()}です。`
+   :"月給を入力すると、支出割合と貯金後の残額を計算できます。";
+ const protein=data.meals.filter(x=>x.date===today).reduce((s,x)=>s+x.protein,0);
+ const weekStart=new Date();weekStart.setDate(weekStart.getDate()-6);
+ const exercise=data.workouts.filter(x=>new Date(x.date+"T00:00:00")>=new Date(weekStart.toISOString().slice(0,10)+"T00:00:00")).reduce((s,x)=>s+x.min,0);
+ document.getElementById("money").textContent="¥"+money.toLocaleString();document.getElementById("moneyCount").textContent=data.expenses.filter(x=>x.date.startsWith(month)).length+"件";
+ document.getElementById("protein").textContent=protein;document.getElementById("exercise").textContent=exercise;document.getElementById("exerciseCount").textContent=data.workouts.length+"回";
+ document.getElementById("total").textContent=data.expenses.length+data.meals.length+data.workouts.length;
+ document.getElementById("advice").textContent=protein<120?`今日はタンパク質が${120-protein}g不足しています。夕食やプロテインで補うとよさそうです。今月の支出は¥${money.toLocaleString()}です。`: "今日のタンパク質目標は達成しています。いい感じです。";
+ buildHistoryMonths();
+ drawMoneyChart();
+ renderOptimization();
+ renderList(document.querySelector(".tabs button.active").textContent.includes("支出")?"expense":document.querySelector(".tabs button.active").textContent.includes("食事")?"meal":"workout");
+}
+function renderList(type){
+ const box=document.getElementById("list");
+ let arr=data[type==="expense"?"expenses":type==="meal"?"meals":"workouts"].slice().reverse().slice(0,10);
+ if(!arr.length){box.innerHTML='<div class="empty">まだ記録がありません</div>';return}
+ let rows=arr.map(x=>type==="expense"?`<tr><td>${x.date}</td><td>${x.cat}</td><td>${x.memo||"-"}</td><td>¥${x.amount.toLocaleString()}</td><td><button class="delete" onclick="del('expenses',${x.id})">削除</button></td></tr>`:
+ type==="meal"?`<tr><td>${x.date}</td><td>${x.name}</td><td>${x.protein}g</td><td>${x.cal||"-"} kcal</td><td><button class="delete" onclick="del('meals',${x.id})">削除</button></td></tr>`:
+ `<tr><td>${x.date}</td><td>${x.type}</td><td>${x.memo||"-"}</td><td>${x.min}分</td><td><button class="delete" onclick="del('workouts',${x.id})">削除</button></td></tr>`).join("");
+ let head=type==="expense"?'<tr><th>日付</th><th>カテゴリ</th><th>内容</th><th>金額</th><th></th></tr>':type==="meal"?'<tr><th>日付</th><th>食事</th><th>タンパク質</th><th>カロリー</th><th></th></tr>':'<tr><th>日付</th><th>種類</th><th>内容</th><th>時間</th><th></th></tr>';
+ box.innerHTML='<table>'+head+rows+'</table>';
+}
+
+function getChartMonths(){
+ const months=new Set([today.slice(0,7)]);
+ [...data.expenses,...data.meals,...data.workouts].forEach(x=>{
+   if(x.date) months.add(x.date.slice(0,7));
+ });
+ return [...months].sort().slice(-12);
+}
+function drawMoneyChart(){
+ const canvas=document.getElementById("moneyChart");
+ if(!canvas)return;
+ const ctx=canvas.getContext("2d");
+ const months=getChartMonths();
+ const metric=document.getElementById("moneyChartMetric").value;
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ const salary=Number(data.money?.salary)||0;
+ const fixed=Object.values(data.fixedCosts||{}).reduce((s,x)=>s+Number(x||0),0);
+ const rows=months.map(m=>{
+   const variable=data.expenses.filter(x=>x.date.startsWith(m)).reduce((s,x)=>s+x.amount,0);
+   const total=variable+fixed;
+   return {month:m,income:salary,expense:total,saving:Math.max(0,salary-total)};
+ });
+ const values=metric==="money"
+   ? rows.flatMap(r=>[r.income,r.expense,r.saving])
+   : rows.map(r=>metric==="expense"?r.expense:r.saving);
+ const max=Math.max(...values,1);
+
+ const left=65,right=20,top=25,bottom=55;
+ const chartW=canvas.width-left-right, chartH=canvas.height-top-bottom;
+ const groupW=chartW/Math.max(rows.length,1);
+ const barW=metric==="money"?Math.min(18,groupW/5):Math.min(30,groupW/2.5);
+
+ ctx.font="12px sans-serif";
+ ctx.fillStyle="#737b85";
+ ctx.strokeStyle="#e1e5e8";
+ ctx.lineWidth=1;
+
+ for(let i=0;i<=4;i++){
+   const y=top+chartH-(chartH*i/4);
+   ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(left+chartW,y);ctx.stroke();
+   ctx.textAlign="right";
+   ctx.fillText("¥"+Math.round(max*i/4).toLocaleString(),left-8,y+4);
+ }
+
+ rows.forEach((r,i)=>{
+   const center=left+groupW*i+groupW/2;
+   const vals=metric==="money"
+     ? [{v:r.income,label:"収入"},{v:r.expense,label:"支出"},{v:r.saving,label:"貯金"}]
+     : [{v:metric==="expense"?r.expense:r.saving,label:metric==="expense"?"支出":"貯金"}];
+
+   vals.forEach((item,j)=>{
+     const x=metric==="money"
+       ? center+(j-1)*(barW+5)-barW/2
+       : center-barW/2;
+     const h=item.v/max*chartH;
+     ctx.fillStyle="#20242a";
+     ctx.fillRect(x,top+chartH-h,barW,h);
+     ctx.fillStyle="#737b85";
+     ctx.textAlign="center";
+     ctx.fillText((item.v/10000).toFixed(1)+"万",x+barW/2,top+chartH-h-7);
+   });
+
+   ctx.fillStyle="#737b85";
+   ctx.textAlign="center";
+   ctx.fillText(r.month.slice(5)+"月",center,top+chartH+25);
+ });
+
+ if(metric==="money"){
+   ctx.textAlign="left";
+   ctx.fillStyle="#20242a";
+   ctx.fillText("■ 収入　■ 支出　■ 貯金",left,canvas.height-10);
+ }
+ document.getElementById("chartNote").textContent=
+   metric==="money" ? "各月の収入・総支出・貯金可能額を比較しています。" :
+   metric==="expense" ? "各月の総支出（変動支出＋固定費）です。" :
+   "各月の貯金可能額（収入−総支出）です。";
+}
+v13UpdateStatus();
+render();
+</script>
+
+<script>
+if("serviceWorker" in navigator){
+ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+
+</html>

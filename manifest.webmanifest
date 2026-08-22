@@ -1,0 +1,12 @@
+{
+  "name": "生活最適化AI V13",
+  "short_name": "生活最適化AI",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f6f8",
+  "theme_color": "#20242a",
+  "lang": "ja",
+  "description": "生活最適化AI V13 データ保存・バックアップ強化版"
+}
